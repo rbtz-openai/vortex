@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/grafana/loki/pkg/iter"
@@ -14,10 +15,18 @@ import (
 	"github.com/grafana/loki/pkg/logqlmodel/stats"
 	"github.com/grafana/loki/pkg/querier"
 	indexStats "github.com/grafana/loki/pkg/storage/stores/index/stats"
-	prometheustranslator "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/prometheus"
 
 	"github.com/rbtz-openai/vortex/pkg/ql"
 )
+
+func normalizeLabel(label string) string {
+	return strings.Map(func(r rune) rune {
+		if r == '.' {
+			return '_'
+		}
+		return r
+	}, label)
+}
 
 func NewClickhouseQuerier(
 	db *sql.DB,
@@ -57,7 +66,7 @@ func (cq *clickhouseQuerier) Label(ctx context.Context, req *logproto.LabelReque
 		if err := rows.Scan(&value); err != nil {
 			return nil, err
 		}
-		value = prometheustranslator.NormalizeLabel(value)
+		value = normalizeLabel(value)
 
 		lr.Values = append(lr.Values, value)
 	}
@@ -95,7 +104,7 @@ func (cq *clickhouseQuerier) Series(ctx context.Context, req *logproto.SeriesReq
 
 		normalized := make(map[string]string, len(m))
 		for key, value := range m {
-			normalized[prometheustranslator.NormalizeLabel(key)] = value
+			normalized[normalizeLabel(key)] = value
 		}
 
 		lr.Series = append(lr.Series, logproto.SeriesIdentifier{Labels: normalized})

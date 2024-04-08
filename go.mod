@@ -9,13 +9,6 @@ require (
 	github.com/go-kit/log v0.2.1
 	github.com/gorilla/mux v1.8.0
 	github.com/huandu/go-sqlbuilder v1.21.0
-	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/prometheus v0.97.0
-)
-
-require (
-	github.com/hashicorp/go-version v1.6.0 // indirect
-	go.opentelemetry.io/collector/featuregate v1.4.0 // indirect
-	go.opentelemetry.io/collector/pdata v1.4.0 // indirect
 )
 
 replace github.com/hashicorp/consul => github.com/hashicorp/consul v1.5.1

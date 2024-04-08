@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/grafana/loki/pkg/logproto"
-	prometheustranslator "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/prometheus"
 	"github.com/prometheus/prometheus/model/labels"
 )
 
@@ -26,7 +25,7 @@ func (r *rowEntryIterator) readFromDB() (s serializedRow, err error) {
 
 	s.labelMap = make(map[string]string, len(labelMap))
 	for k, v := range labelMap {
-		s.labelMap[prometheustranslator.NormalizeLabel(k)] = v
+		s.labelMap[normalizeLabel(k)] = v
 	}
 	s.labels = labels.FromMap(s.labelMap)
 
