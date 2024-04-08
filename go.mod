@@ -1,4 +1,4 @@
-module github.com/monogon-dev/vortex
+module github.com/rbtz-openai/vortex
 
 go 1.21
 
@@ -9,11 +9,11 @@ require (
 	github.com/go-kit/log v0.2.1
 	github.com/gorilla/mux v1.8.0
 	github.com/huandu/go-sqlbuilder v1.21.0
+	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/prometheus v0.97.0
 )
 
 require (
 	github.com/hashicorp/go-version v1.6.0 // indirect
-	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/prometheus v0.97.0 // indirect
 	go.opentelemetry.io/collector/featuregate v1.4.0 // indirect
 	go.opentelemetry.io/collector/pdata v1.4.0 // indirect
 )
@@ -137,7 +137,7 @@ require (
 	github.com/googleapis/enterprise-certificate-proxy v0.2.3 // indirect
 	github.com/googleapis/gax-go/v2 v2.7.1 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
-	github.com/grafana/dskit v0.0.0-20230518162305-3c92c534827e // indirect
+	github.com/grafana/dskit v0.0.0-20230518162305-3c92c534827e
 	github.com/grafana/gomemcache v0.0.0-20230316202710-a081dae0aba9 // indirect
 	github.com/grafana/loki v1.6.2-0.20230621154817-806674fdaa6d
 	github.com/grafana/loki/pkg/push v0.0.0-20230621154817-806674fdaa6d // indirect
@@ -218,7 +218,7 @@ require (
 	github.com/thanos-io/objstore v0.0.0-20230201072718-11ffbc490204 // indirect
 	github.com/uber/jaeger-client-go v2.30.0+incompatible // indirect
 	github.com/uber/jaeger-lib v2.4.1+incompatible // indirect
-	github.com/weaveworks/common v0.0.0-20230511094633-334485600903 // indirect
+	github.com/weaveworks/common v0.0.0-20230511094633-334485600903
 	github.com/weaveworks/promrus v1.2.0 // indirect
 	github.com/willf/bitset v1.1.11 // indirect
 	github.com/willf/bloom v2.0.3+incompatible // indirect

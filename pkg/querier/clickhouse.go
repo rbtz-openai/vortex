@@ -16,7 +16,7 @@ import (
 	indexStats "github.com/grafana/loki/pkg/storage/stores/index/stats"
 	prometheustranslator "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/prometheus"
 
-	"github.com/monogon-dev/vortex/pkg/ql"
+	"github.com/rbtz-openai/vortex/pkg/ql"
 )
 
 func NewClickhouseQuerier(

@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/loki/pkg/validation"
 	"github.com/weaveworks/common/user"
 
-	chquerier "github.com/monogon-dev/vortex/pkg/querier"
+	chquerier "github.com/rbtz-openai/vortex/pkg/querier"
 )
 
 func main() {
