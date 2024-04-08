@@ -2,11 +2,14 @@ package querier
 
 import (
 	"database/sql"
+	"fmt"
 	"hash/fnv"
+	"log"
 	"sync"
 	"time"
 
 	"github.com/grafana/loki/pkg/logproto"
+	prometheustranslator "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/prometheus"
 	"github.com/prometheus/prometheus/model/labels"
 )
 
@@ -16,9 +19,14 @@ type rowEntryIterator struct {
 }
 
 func (r *rowEntryIterator) readFromDB() (s serializedRow, err error) {
-	s.labelMap = make(map[string]string)
-	if err := r.rows.Scan(&s.timestamp, &s.message, &s.labelMap); err != nil {
-		return serializedRow{}, err
+	labelMap := make(map[string]string)
+	if err := r.rows.Scan(&s.timestamp, &s.body, &labelMap); err != nil {
+		return serializedRow{}, fmt.Errorf("failed to scan row: %w", err)
+	}
+
+	s.labelMap = make(map[string]string, len(labelMap))
+	for k, v := range labelMap {
+		s.labelMap[prometheustranslator.NormalizeLabel(k)] = v
 	}
 	s.labels = labels.FromMap(s.labelMap)
 
@@ -34,6 +42,7 @@ func (r *rowEntryIterator) Next() bool {
 		// we trigger the read on the Next call.
 		// If an error occurs we return early
 		if _, err := r.currentRow(); err != nil {
+			log.Printf("failed to read row: %s", err)
 			return false
 		}
 	}
@@ -76,7 +85,7 @@ func (r *rowEntryIterator) Close() error {
 type serializedRow struct {
 	// read from db
 	timestamp time.Time
-	message   string
+	body      string
 	labelMap  map[string]string
 
 	// serialized based on map
@@ -88,8 +97,9 @@ func (r *rowEntryIterator) Entry() logproto.Entry {
 	if err != nil {
 		return logproto.Entry{}
 	}
+
 	return logproto.Entry{
 		Timestamp: row.timestamp,
-		Line:      row.message,
+		Line:      row.body,
 	}
 }

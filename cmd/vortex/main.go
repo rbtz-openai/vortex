@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/tls"
+	"flag"
 	"log"
 	"net/http"
 	"os"
@@ -18,31 +20,43 @@ import (
 )
 
 func main() {
+	var (
+		clickhouseAddr     = flag.String("clickhouse.addr", "clickhouse.lgtm-0.internal.api.openai.org:443", "Clickhouse address")
+		clickhouseDatabase = flag.String("clickhouse.database", "otel", "Clickhouse database")
+		clickhouseTable    = flag.String("clickhouse.table", "logs", "Clickhouse table")
+		clickhouseUsername = flag.String("clickhouse.username", "default", "Clickhouse username")
+		clickhousePassword = flag.String("clickhouse.password", "", "Clickhouse password")
+	)
+	flag.Parse()
+
 	logger := kitlog.NewLogfmtLogger(os.Stderr)
 	log.SetOutput(kitlog.NewStdlibAdapter(logger))
 
 	conn := clickhouse.OpenDB(&clickhouse.Options{
+		// TODO(rbtz): Compression
+		// TODO(rbtz): Native protocol
 		Protocol: clickhouse.HTTP,
-		Addr:     []string{"127.0.0.1:8123"},
+		Addr:     []string{*clickhouseAddr},
+		TLS:      &tls.Config{},
 		Auth: clickhouse.Auth{
-			Database: "default",
-			Username: "default",
-			Password: "",
+			Database: *clickhouseDatabase,
+			Username: *clickhouseUsername,
+			Password: *clickhousePassword,
 		},
 	})
 
 	if err := conn.Ping(); err != nil {
-		log.Fatal(err)
+		log.Fatalf("connect failed: %s", err)
 	}
 
 	defaultLimits := validation.Limits{}
 	flagext.DefaultValues(&defaultLimits)
 	limits, err := validation.NewOverrides(defaultLimits, nil)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("limits failed: %s", err)
 	}
 
-	chq := chquerier.NewClickhouseQuerier(conn)
+	chq := chquerier.NewClickhouseQuerier(conn, *clickhouseDatabase, *clickhouseTable)
 	api := querier.NewQuerierAPI(querier.Config{}, chq, limits, logger)
 
 	routes := map[string]http.Handler{

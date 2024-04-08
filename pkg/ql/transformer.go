@@ -3,17 +3,23 @@ package ql
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/grafana/loki/pkg/logql/syntax"
 	"github.com/prometheus/prometheus/model/labels"
 )
 
-const LogMessageColumn = "message"
-const LogLabelsColumn = "labels"
-const FilebeatTable = "filebeat"
-
 type logQLTransformer struct {
 	*selectBuilder
+}
+
+func denormalizeLabel(label string) string {
+	return strings.Map(func(r rune) rune {
+		if r == '_' {
+			return '.'
+		}
+		return r
+	}, label)
 }
 
 func (b *logQLTransformer) AcceptMatcher(m *labels.Matcher) {
@@ -21,7 +27,11 @@ func (b *logQLTransformer) AcceptMatcher(m *labels.Matcher) {
 		return
 	}
 
-	keySelector := fmt.Sprintf("arrayElement(`%s`, %s)", LogLabelsColumn, b.Args.Add(m.Name))
+	keySelector := fmt.Sprintf(
+		"arrayElement(`%s`, %s)",
+		OtelLogLabelsColumn,
+		b.Args.Add(denormalizeLabel(m.Name)),
+	)
 	switch m.Type {
 	case labels.MatchEqual:
 		b.Where(b.EqualField(keySelector, m.Value))
@@ -55,15 +65,15 @@ func (b *logQLTransformer) AcceptLineFilterExpr(expr *syntax.LineFilterExpr) {
 
 	switch expr.Ty {
 	case labels.MatchEqual:
-		b.Where(b.Like(LogMessageColumn, "%"+expr.Match+"%"))
+		b.Where(b.Like(OtelLogMessageColumn, "%"+expr.Match+"%"))
 	case labels.MatchNotEqual:
-		b.Where(b.NotLike(LogMessageColumn, "%"+expr.Match+"%"))
+		b.Where(b.NotLike(OtelLogMessageColumn, "%"+expr.Match+"%"))
 	case labels.MatchRegexp:
-		b.Where(b.Match(LogMessageColumn, expr.Match))
+		b.Where(b.Match(OtelLogMessageColumn, expr.Match))
 	case labels.MatchNotRegexp:
-		b.Where(b.NotMatch(LogMessageColumn, expr.Match))
+		b.Where(b.NotMatch(OtelLogMessageColumn, expr.Match))
 	default:
-		panic(fmt.Sprintf("invalid match type: %v", expr.Ty))
+		log.Printf("AcceptLineFilterExpr: invalid match type: %v", expr.Ty)
 	}
 }
 
@@ -71,13 +81,13 @@ func (b *logQLTransformer) AcceptLogSelectorExpr(expr syntax.LogSelectorExpr) {
 	expr.Walk(func(e any) {
 		switch e.(type) {
 		case *syntax.PipelineExpr:
-			// ignored
+			log.Printf("AcceptLogSelectorExpr: PipelineExpr: %#v", e)
 		case *syntax.MatchersExpr:
 			b.AcceptMatchersExpr(e.(*syntax.MatchersExpr))
 		case *syntax.LineFilterExpr:
 			b.AcceptLineFilterExpr(e.(*syntax.LineFilterExpr))
 		default:
-			log.Printf("%#v", e)
+			log.Printf("AcceptLogSelectorExpr: %#v", e)
 		}
 	})
 }
